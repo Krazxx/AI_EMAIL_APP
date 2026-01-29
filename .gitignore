@@ -1,4 +1,17 @@
+# Secrets
 .env
-*.json
+credentials.json
+token*.json
+
+# Database
 db.sqlite3
+
+# Python
 __pycache__/
+*.pyc
+
+# Django static
+staticfiles/
+
+# VS Code
+.vscode/
