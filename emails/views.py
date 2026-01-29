@@ -5,6 +5,20 @@ from .models import Email
 from .emails import fetch_and_store_emails
 from .forms import CustomSignupForm
 from .ai_utils import analyze_email_light, analyze_email_full
+from django.shortcuts import redirect
+from .ai_utils import start_gmail_auth
+from django.shortcuts import redirect
+from .ai_utils import save_user_token
+
+def oauth2callback(request):
+    save_user_token(request, request.user)
+    return redirect('/emails/')
+
+
+def connect_gmail(request):
+    auth_url = start_gmail_auth(request)
+    return redirect(auth_url)
+
 
 
 
@@ -88,15 +102,6 @@ def process_email(request, email_id):
     email.save()
     return redirect('email_list')
 
-def connect_gmail(request):
-    from .ai_utils import start_gmail_auth
-    return redirect(start_gmail_auth(request))
-
-
-def oauth2callback(request):
-    from .ai_utils import save_user_token
-    save_user_token(request, request.user)
-    return redirect('/')
 
 
 
