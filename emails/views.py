@@ -7,6 +7,7 @@ from .forms import CustomSignupForm
 from .ai_utils import analyze_email_light, analyze_email_full
 
 
+
 # ==========================
 # SIGNUP
 # ==========================
@@ -87,6 +88,15 @@ def process_email(request, email_id):
     email.save()
     return redirect('email_list')
 
+def connect_gmail(request):
+    from .ai_utils import start_gmail_auth
+    return redirect(start_gmail_auth(request))
+
+
+def oauth2callback(request):
+    from .ai_utils import save_user_token
+    save_user_token(request, request.user)
+    return redirect('/')
 
 
 
