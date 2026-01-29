@@ -86,3 +86,7 @@ def process_email(request, email_id):
 
     email.save()
     return redirect('email_list')
+
+
+
+
