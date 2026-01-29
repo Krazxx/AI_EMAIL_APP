@@ -1,0 +1,103 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sign Up</title>
+    <style>
+        body { margin:0; font-family: Arial; color:white; overflow:hidden;}
+        video { position:fixed; min-width:100%; min-height:100%; z-index:-1; object-fit:cover;}
+        .box { width:350px; margin:120px auto; background:rgba(0,0,0,0.6); padding:30px; border-radius:15px; text-align:center;}
+        input { width:90%; padding:12px; margin:10px 0; border-radius:6px; border:none; background:rgba(255,255,255,0.1); color:white;}
+        
+        .error {
+    color: #ff4d4d;
+    font-size: 13px;
+    margin-bottom: 10px;
+    text-align: left;
+    padding-left: 10px;
+}
+button { padding:10px 20px; background:#00c3ff; border:none; color:white; border-radius:5px;}
+    
+     body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            color: white;
+            overflow: hidden;   /* 🔥 IMPORTANT */
+        }
+
+        video {
+            position: fixed;
+            right: 0;
+            bottom: 0;
+            min-width: 100%;
+            min-height: 100%;
+            z-index: -1;
+            object-fit: cover;
+        }
+
+        .signup-box {
+            width: 350px;
+            margin: 100px auto;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+        }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    </style> 
+</head>
+<body>
+
+<video autoplay muted loop>
+    <source src="{% static 'videos/bg.mp4' %}" type="video/mp4">
+</video>
+
+
+
+
+
+
+<div class="box">
+    <h1>Create Account</h1>
+    <form method="post">
+    {% csrf_token %}
+
+    {% for field in form %}
+        <input type="{{ field.field.widget.input_type }}"
+               name="{{ field.name }}"
+               placeholder="{{ field.label }}"
+               value="{{ field.value|default_if_none:'' }}"
+               required>
+
+        {% if field.errors %}
+            <div style="color:#ff4d4d; font-size:13px; text-align:left; margin-bottom:10px;">
+                {{ field.errors|striptags }}
+            </div>
+        {% endif %}
+    {% endfor %}
+
+    {% if form.non_field_errors %}
+        <div style="color:#ff4d4d;">
+            {{ form.non_field_errors }}
+        </div>
+    {% endif %}
+
+    <button type="submit">Sign Up</button>
+</form>
+
+</div>
+
+</body>
+</html>

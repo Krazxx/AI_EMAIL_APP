@@ -1,0 +1,92 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>KrazxX AI Login</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            color: white;
+            overflow: hidden;
+        }
+
+        video {
+            position: fixed;
+            right: 0;
+            bottom: 0;
+            min-width: 100%;
+            min-height: 100%;
+            z-index: -1;
+            object-fit: cover;
+        }
+
+        .login-box {
+            width: 350px;
+            margin: 120px auto;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        input {
+            width: 90%;
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 6px;
+            border: none;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            font-size: 14px;
+        }
+
+        input::placeholder {
+            color: #ddd;
+        }
+
+        button {
+            padding: 10px 20px;
+            background: #00c3ff;
+            border: none;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        a {
+            color: #00c3ff;
+            display: block;
+            margin-top: 15px;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<video autoplay muted loop>
+    <source src="{% static 'videos/bg.mp4' %}" type="video/mp4">
+</video>
+
+<div class="login-box">
+    <h1>KrazxX Mail AI 🤖</h1>
+
+    <form method="post">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+
+        <input type="text" name="username" placeholder="Username" required>
+        <input type="password" name="password" placeholder="Password" required>
+
+        <button type="submit">Login</button>
+    </form>
+
+    <a href="{% url 'signup' %}">Don't have an account? Sign up</a>
+</div>
+
+</body>
+</html>

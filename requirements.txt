@@ -1,0 +1,5 @@
+django
+djangorestframework
+openai
+python-dotenv
+psycopg2-binary

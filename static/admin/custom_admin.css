@@ -1,0 +1,142 @@
+/* ===================================== */
+/*        🦇 BATCAVE AI THEME 🦇         */
+/* ===================================== */
+
+/* ===== GLOBAL ===== */
+html, body, #container {
+    background: transparent !important;
+    height: 100%;
+    color: #e0e5ea !important;
+    font-family: "Segoe UI", sans-serif;
+}
+
+/* ===== HEADER BAR ===== */
+#header {
+    background: linear-gradient(90deg, #2b2f33, #1f2327) !important;
+    border-bottom: 1px solid #444 !important;
+}
+
+/* ===== CENTER & STYLE TOP TITLE ===== */
+#site-name {
+    width: 100%;
+    text-align: center !important;
+    font-size: 28px !important;
+    font-weight: 800 !important;
+    letter-spacing: 1px;
+    color: #f0f3f6 !important;
+    text-shadow: 0 0 12px rgba(255,255,255,0.08);
+}
+
+/* ===== SITE ADMIN TITLE ===== */
+#content h1 {
+    display: block;
+    width: 100%;
+    text-align: center !important;
+    font-size: 46px !important;
+    font-weight: 900 !important;
+    color: #e5eaef !important;
+    text-shadow:
+        0 0 12px rgba(255,255,255,0.12),
+        0 0 30px rgba(255,255,255,0.05);
+    margin: 10px auto 50px auto !important;
+    text-transform: uppercase;
+}
+
+/* ===== REMOVE DJANGO DEFAULT FLOAT GRID ===== */
+.dashboard .colMS,
+.dashboard .colSM {
+    float: none !important;
+}
+
+/* ===== CENTER COLUMNS ===== */
+.dashboard #content-main {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 80px;
+}
+
+/* Left column width */
+.dashboard .colMS {
+    width: 500px;
+}
+
+/* Right column width */
+.dashboard .colSM {
+    width: 360px;
+}
+
+/* Remove Django white boxes */
+.dashboard #content,
+.dashboard #content-main,
+.dashboard #content-related {
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+}
+
+/* ===== GLASS CARDS ===== */
+.module {
+    background: rgba(30, 34, 38, 0.85) !important;
+    backdrop-filter: blur(12px);
+    border-radius: 18px;
+    padding: 24px;
+    margin-bottom: 22px;
+    box-shadow:
+        0 0 25px rgba(0,0,0,0.5),
+        inset 0 0 20px rgba(255,255,255,0.03);
+}
+
+/* ===== TABLE HEADERS ===== */
+th {
+    background: rgba(70,75,80,0.6) !important;
+    color: #d7dde3 !important;
+}
+
+/* ===== LINKS ===== */
+a {
+    color: #cdd3d9 !important;
+}
+a:hover {
+    color: #ffffff !important;
+}
+
+/* ===== BUTTONS ===== */
+.button, input[type=submit] {
+    background: linear-gradient(145deg, #4a5056, #32373c) !important;
+    border: 1px solid #555 !important;
+    color: #f2f4f6 !important;
+    border-radius: 6px;
+}
+
+/* ===== SIDEBAR ===== */
+#nav-sidebar {
+    background: rgba(25,28,32,0.9) !important;
+}
+
+/* ===== RECENT ACTIONS TITLE ===== */
+#recent-actions-module h2 {
+    color: #e0e5ea !important;
+}
+
+/* ===== SMALL DETAILS ===== */
+.module caption {
+    color: #aab2bb !important;
+}
+
+/* ===== TOP RIGHT USER BAR ===== */
+#user-tools {
+    font-size: 15px !important;
+    font-weight: 300;
+}
+
+#user-tools a {
+    padding: 3px 05px;
+    color: #ffffff !important;
+}
+
+#user-tools a:hover {
+    color: #00c3ff !important;
+}
+
+
