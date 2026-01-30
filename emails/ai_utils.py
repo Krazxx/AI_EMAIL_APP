@@ -75,6 +75,16 @@ def ask_ai(prompt):
     except Exception as e:
         print("AI ERROR:", e)
         return None
+    
+def extract_json(raw, mode):
+    try:
+        match = re.search(r'\{.*\}', raw, re.DOTALL)
+        if match:
+            return json.loads(match.group(0))
+    except Exception as e:
+        print(f"⚠️ JSON parse error ({mode}):", e)
+
+    return None
 
 
 # ================= LIGHT AI =================
@@ -82,12 +92,7 @@ def analyze_email_light(subject, body):
     prompt = f"""
 You are an email classifier.
 
-STRICT RULES:
-- Output ONLY valid JSON
-- No explanations
-- No markdown
-
-FORMAT:
+Return ONLY JSON:
 {{
   "category": "work/personal/spam/urgent/security/promo",
   "summary": "short summary",
@@ -98,39 +103,23 @@ SUBJECT: {subject}
 BODY: {body}
 """
 
-   
-   
-   
-   
-   
-   
-   
-   
     raw = ask_ai(prompt)
     if not raw:
         return {"category": "unknown", "summary": "", "important": "no"}
 
-    match = re.search(r'\{.*\}', raw, re.DOTALL)
-    if match:
-       try:
-        return json.loads(match.group(0))
-       except:
-        print("⚠️ JSON parse error (light)")
+    data = extract_json(raw, "light")
 
+    if data:
+        return data
+
+    print("⚠️ AI returned invalid format:", raw)
     return {"category": "unknown", "summary": "", "important": "no"}
 
 
 # ================= FULL AI (REPLY) =================
 def analyze_email_full(subject, body):
     prompt = f"""
-You are an AI email assistant.
-
-STRICT RULES:
-- Output ONLY valid JSON
-- No explanations
-- No markdown
-
-FORMAT:
+Return ONLY JSON:
 {{ "reply": "short helpful reply" }}
 
 SUBJECT: {subject}
@@ -141,13 +130,12 @@ BODY: {body}
     if not raw:
         return {"reply": "AI server not responding."}
 
-    match = re.search(r'\{.*\}', raw, re.DOTALL)
-    if match:
-        try:
-         return json.loads(match.group(0))
-        except:
-         print("⚠️ JSON parse error (full)")
+    data = extract_json(raw, "full")
 
+    if data:
+        return data
+
+    print("⚠️ AI reply format error:", raw)
     return {"reply": "AI response format error."}
 
 
