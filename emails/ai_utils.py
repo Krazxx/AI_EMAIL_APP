@@ -2,17 +2,15 @@ import requests
 import json
 import re
 import os
-import json
 from google_auth_oauthlib.flow import Flow
 from google.oauth2.credentials import Credentials
 import base64
 from googleapiclient.discovery import build
-from google.oauth2.credentials import Credentials
 from .models import Email
 from django.utils import timezone
+from .models import UserGmailToken
 
 SCOPES = ['https://www.googleapis.com/auth/gmail.modify']
-
 
 
 def start_gmail_auth(request):
@@ -20,33 +18,20 @@ def start_gmail_auth(request):
         'credentials.json',
         scopes=SCOPES,
         redirect_uri="https://ai-email-app-82gm.onrender.com/emails/oauth2callback/"
-
     )
-
-    auth_url, state = flow.authorization_url(
-        access_type='offline',
-        prompt='consent'
-    )
-
+    auth_url, state = flow.authorization_url(access_type='offline', prompt='consent')
     request.session['state'] = state
     return auth_url
 
 
-
-from .models import UserGmailToken
-import json
-
 def save_user_token(request, user):
     state = request.session['state']
-
     flow = Flow.from_client_secrets_file(
         'credentials.json',
         scopes=SCOPES,
         state=state,
         redirect_uri="https://ai-email-app-82gm.onrender.com/emails/oauth2callback/"
-
     )
-
     flow.fetch_token(authorization_response=request.build_absolute_uri())
     creds = flow.credentials
 
@@ -55,87 +40,89 @@ def save_user_token(request, user):
     obj.save()
 
 
-
-
+# ================= AI CONFIG =================
 OLLAMA_URL = "https://vanquishable-liplike-rosina.ngrok-free.dev/api/generate"
 MODEL = "llama3"
 
 
+# 🔥 SAFE OLLAMA CALL WRAPPER
+def ask_ollama(prompt):
+    try:
+        r = requests.post(
+            OLLAMA_URL,
+            json={
+                "model": MODEL,
+                "prompt": prompt,
+                "stream": False
+            },
+            timeout=60
+        )
+
+        print("🧠 AI STATUS:", r.status_code)
+        print("🧠 AI RAW:", r.text[:300])
+
+        if r.status_code != 200:
+            return None
+
+        data = r.json()
+        return data.get("response")
+
+    except Exception as e:
+        print("AI CONNECTION ERROR:", e)
+        return None
+
 
 # =========================================
-# LIGHT AI — used during SYNC (FAST)
-# Only category + summary + importance
+# LIGHT AI
 # =========================================
 def analyze_email_light(subject, body):
     prompt = f"""
-You are an AI email classifier.
-
-Return ONLY JSON.
-
+Return ONLY JSON:
 {{
   "category": "work/personal/spam/urgent/security/promo",
   "summary": "short summary",
   "important": "yes/no"
 }}
 
-EMAIL SUBJECT: {subject}
-EMAIL BODY: {body}
+SUBJECT: {subject}
+BODY: {body}
 """
 
-    try:
-        response = requests.post(OLLAMA_URL, json={
-            "model": MODEL,
-            "prompt": prompt,
-            "stream": False,
-            "options": {"temperature": 0.1}
-        }).json()["response"]
+    raw = ask_ollama(prompt)
+    if not raw:
+        return {"category": "unknown", "summary": "", "important": "no"}
 
-        match = re.search(r'\{.*\}', response, re.DOTALL)
-        if match:
-            return json.loads(match.group(0))
-
-    except Exception as e:
-        print("LIGHT AI ERROR:", e)
+    match = re.search(r'\{.*\}', raw, re.DOTALL)
+    if match:
+        return json.loads(match.group(0))
 
     return {"category": "unknown", "summary": "", "important": "no"}
 
 
 # =========================================
-# FULL AI — used when clicking ANALYZE
-# Generates reply
+# FULL AI (REPLY)
 # =========================================
 def analyze_email_full(subject, body):
     prompt = f"""
-You are an AI email assistant.
+Return ONLY JSON:
+{{ "reply": "short helpful reply" }}
 
-Return ONLY JSON.
-
-{{
-  "reply": "short helpful reply"
-}}
-
-EMAIL SUBJECT: {subject}
-EMAIL BODY: {body}
+SUBJECT: {subject}
+BODY: {body}
 """
 
-    try:
-        response = requests.post(OLLAMA_URL, json={
-            "model": MODEL,
-            "prompt": prompt,
-            "stream": False,
-            "options": {"temperature": 0.2}
-        }).json()["response"]
+    raw = ask_ollama(prompt)
+    if not raw:
+        return {"reply": "AI server not responding."}
 
-        match = re.search(r'\{.*\}', response, re.DOTALL)
-        if match:
-            return json.loads(match.group(0))
+    match = re.search(r'\{.*\}', raw, re.DOTALL)
+    if match:
+        return json.loads(match.group(0))
 
-    except Exception as e:
-        print("FULL AI ERROR:", e)
-
-    return {"reply": ""}
+    return {"reply": "AI response format error."}
 
 
+# ================= GMAIL FETCH (UNCHANGED) =================
 def fetch_and_store_emails(user):
     token_path = f"token_{user.id}.json"
 
@@ -147,7 +134,6 @@ def fetch_and_store_emails(user):
     service = build('gmail', 'v1', credentials=creds)
 
     try:
-        # Fetch latest 15 emails
         results = service.users().messages().list(userId='me', maxResults=15).execute()
         messages = results.get('messages', [])
 
@@ -158,18 +144,15 @@ def fetch_and_store_emails(user):
         for msg in messages:
             msg_id = msg['id']
 
-            # Skip if already saved
             if Email.objects.filter(gmail_id=msg_id, user=user).exists():
                 continue
 
             message = service.users().messages().get(userId='me', id=msg_id, format='full').execute()
-
             headers = message['payload']['headers']
 
             subject = next((h['value'] for h in headers if h['name'] == 'Subject'), "(No Subject)")
             sender = next((h['value'] for h in headers if h['name'] == 'From'), "Unknown")
 
-            # Extract body
             body = ""
             parts = message['payload'].get('parts', [])
 
@@ -185,7 +168,6 @@ def fetch_and_store_emails(user):
                 if data:
                     body = base64.urlsafe_b64decode(data).decode('utf-8', errors='ignore')
 
-            # Save to DB
             Email.objects.create(
                 user=user,
                 gmail_id=msg_id,
