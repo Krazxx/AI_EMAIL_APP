@@ -3,6 +3,7 @@ import base64
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
+from pyparsing import token_map
 from .models import Email
 
 SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
@@ -59,7 +60,9 @@ def save_user_token(request, user):
     flow.fetch_token(authorization_response=request.build_absolute_uri())
 
     creds = flow.credentials
-    token_path = f"/tmp/token_{user.id}.json"
+    BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    token_path = os.path.join(BASE_DIR, f"token_{user.id}.json")
+
 
     with open(token_path, 'w') as token:
         token.write(creds.to_json())
@@ -68,6 +71,8 @@ def save_user_token(request, user):
 # ===============================
 # FETCH & STORE EMAILS (SYNC)
 # ===============================
+print("Looking for token at:", token_map)
+
 def fetch_and_store_emails(user):
     service = get_gmail_service(user)
     if not service:
