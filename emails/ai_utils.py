@@ -41,21 +41,24 @@ def save_user_token(request, user):
 
 
 # ================= AI CONFIG =================
-OLLAMA_URL = "https://vanquishable-liplike-rosina.ngrok-free.dev/api/chat"
-MODEL = "llama3"
+OPENROUTER_KEY = os.getenv("OPENROUTER_API_KEY")
+if not OPENROUTER_KEY:
+    print("❌ OPENROUTER_API_KEY not set")
 
 
-# 🔥 SAFE OLLAMA CALL
-def ask_ollama(prompt):
+def ask_ai(prompt):
     try:
         r = requests.post(
-            OLLAMA_URL,
+            "https://openrouter.ai/api/v1/chat/completions",
+            headers={
+                "Authorization": f"Bearer {OPENROUTER_KEY}",
+                "Content-Type": "application/json"
+            },
             json={
-                "model": MODEL,
+                "model": "meta-llama/llama-3-8b-instruct",
                 "messages": [
                     {"role": "user", "content": prompt}
-                ],
-                "stream": False
+                ]
             },
             timeout=60
         )
@@ -67,17 +70,24 @@ def ask_ollama(prompt):
             return None
 
         data = r.json()
-        return data.get("message", {}).get("content")
+        return data["choices"][0]["message"]["content"]
 
     except Exception as e:
-        print("AI CONNECTION ERROR:", e)
+        print("AI ERROR:", e)
         return None
 
 
 # ================= LIGHT AI =================
 def analyze_email_light(subject, body):
     prompt = f"""
-Return ONLY JSON:
+You are an email classifier.
+
+STRICT RULES:
+- Output ONLY valid JSON
+- No explanations
+- No markdown
+
+FORMAT:
 {{
   "category": "work/personal/spam/urgent/security/promo",
   "summary": "short summary",
@@ -88,13 +98,24 @@ SUBJECT: {subject}
 BODY: {body}
 """
 
-    raw = ask_ollama(prompt)
+   
+   
+   
+   
+   
+   
+   
+   
+    raw = ask_ai(prompt)
     if not raw:
         return {"category": "unknown", "summary": "", "important": "no"}
 
     match = re.search(r'\{.*\}', raw, re.DOTALL)
     if match:
+       try:
         return json.loads(match.group(0))
+       except:
+        print("⚠️ JSON parse error (light)")
 
     return {"category": "unknown", "summary": "", "important": "no"}
 
@@ -102,20 +123,30 @@ BODY: {body}
 # ================= FULL AI (REPLY) =================
 def analyze_email_full(subject, body):
     prompt = f"""
-Return ONLY JSON:
+You are an AI email assistant.
+
+STRICT RULES:
+- Output ONLY valid JSON
+- No explanations
+- No markdown
+
+FORMAT:
 {{ "reply": "short helpful reply" }}
 
 SUBJECT: {subject}
 BODY: {body}
 """
 
-    raw = ask_ollama(prompt)
+    raw = ask_ai(prompt)
     if not raw:
         return {"reply": "AI server not responding."}
 
     match = re.search(r'\{.*\}', raw, re.DOTALL)
     if match:
-        return json.loads(match.group(0))
+        try:
+         return json.loads(match.group(0))
+        except:
+         print("⚠️ JSON parse error (full)")
 
     return {"reply": "AI response format error."}
 
