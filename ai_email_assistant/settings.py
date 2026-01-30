@@ -8,7 +8,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['ai-email-app-82gm.onrender.com', '127.0.0.1', 'localhost']
 
@@ -133,3 +133,14 @@ LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
+
+
+# --- RENDER HTTPS FIX ---
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+
+SECURE_SSL_REDIRECT = False  # Render already handles HTTPS
+
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
