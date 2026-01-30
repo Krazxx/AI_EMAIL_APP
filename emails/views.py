@@ -4,6 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from .models import Email
 from .forms import CustomSignupForm
+from .models import UserGmailToken
 from .ai_utils import (
     fetch_and_store_emails,
     analyze_email_light,
@@ -54,10 +55,13 @@ def delete_spam(request):
 # ==========================
 @login_required
 def switch_gmail_account(request):
-    token_path = f"token_{request.user.id}.json"
-    if os.path.exists(token_path):
-        os.remove(token_path)
-    return redirect('sync_gmail')
+    # Delete stored Gmail token from DB
+    UserGmailToken.objects.filter(user=request.user).delete()
+
+    print("🔄 Gmail token deleted. Need re-authentication.")
+
+    # Redirect user to Gmail connect flow
+    return redirect('connect_gmail')
 
 
 # ==========================
