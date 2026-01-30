@@ -13,7 +13,8 @@ def start_gmail_auth(request):
     flow = Flow.from_client_secrets_file(
         'credentials.json',
         scopes=SCOPES,
-        redirect_uri=request.build_absolute_uri('/emails/oauth2callback/')
+        redirect_uri="https://ai-email-app-82gm.onrender.com/emails/oauth2callback/"
+
     )
 
     auth_url, state = flow.authorization_url(
@@ -32,7 +33,8 @@ def save_user_token(request, user):
         'credentials.json',
         scopes=SCOPES,
         state=state,
-        redirect_uri=request.build_absolute_uri('/emails/oauth2callback/')
+       redirect_uri="https://ai-email-app-82gm.onrender.com/emails/oauth2callback/"
+
     )
 
     flow.fetch_token(authorization_response=request.build_absolute_uri())
