@@ -90,11 +90,22 @@ def extract_json(raw, mode):
 # ================= LIGHT AI =================
 def analyze_email_light(subject, body):
     prompt = f"""
-You are an email classifier.
+You are an advanced email classification AI.
+
+Classify emails using these rules:
+
+- If email talks about money, bank, transaction, payment → banking
+- If email mentions login, password, verification, security alert → security
+- If email contains offer, discount, sale, free trial → promotion
+- If email is from social apps like Instagram, Facebook, Discord → social
+- If work related → work
+- If clearly junk/scam → spam
+- Otherwise → personal
+
 
 Return ONLY JSON:
 {{
-  "category": "work/personal/spam/urgent/security/promo",
+  "category": "work/social/promotion/spam/security/banking/personal",
   "summary": "short summary",
   "important": "yes/no"
 }}

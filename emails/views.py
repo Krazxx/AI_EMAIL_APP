@@ -3,7 +3,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from .models import Email
 from .ai_utils import fetch_and_store_emails
-
+from django.db.models import Q
 from .forms import CustomSignupForm
 from .ai_utils import analyze_email_light, analyze_email_full
 from django.shortcuts import redirect
@@ -63,27 +63,29 @@ def switch_gmail_account(request):
 # ==========================
 @login_required
 def sync_gmail(request):
-    # 🔥 Gmail fetching moved to emails.py
+    # Step 1: Fetch from Gmail
     fetch_and_store_emails(request.user)
 
-    # Now classify new emails
+    # Step 2: Get emails that need AI classification
     emails = Email.objects.filter(user=request.user).filter(
-    category__isnull=True
-) | Email.objects.filter(user=request.user, category="unknown")
+        Q(category__isnull=True) | Q(category="unknown")
+    )
 
-
+    # Step 3: Run AI
     for email in emails:
+        print("🤖 Classifying:", email.subject)
+
         ai = analyze_email_light(email.subject, email.body)
 
-        email.category = ai.get("category", "personal")
+        email.category = ai.get("category", "personal").lower()
         email.summary = ai.get("summary", email.subject[:120])
-        email.is_important = ai.get("important", "no") == "yes"
+        email.is_important = ai.get("important", "no").lower() == "yes"
         email.is_spam = email.category == "spam"
+
         email.save()
 
+    print("✅ AI classification complete")
     return redirect('email_list')
-
-
 # ==========================
 # SHOW EMAIL LIST
 # ==========================
