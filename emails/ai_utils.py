@@ -56,42 +56,35 @@ def ask_ai(prompt):
             },
             json={
                 "model": "meta-llama/llama-3-8b-instruct",
-    "messages": [
-        {"role": "system", "content": "You are a JSON API. Only return valid JSON."},
-        {"role": "user", "content": prompt}
-    ],
-    "temperature": 0.2,
-    "max_tokens": 200
+                "messages": [
+                    {"role": "system", "content": "Return ONLY valid JSON."},
+                    {"role": "user", "content": prompt}
+                ],
+                "temperature": 0.2,
+                "max_tokens": 200
             },
             timeout=60
         )
 
         print("🧠 AI STATUS:", r.status_code)
-        print("🧠 AI RAW:", r.text[:300])
-
-        if r.status_code != 200:
-            return None
 
         data = r.json()
-        return data["choices"][0]["message"]["content"]
+
+        # 🔥 DEBUG FULL RESPONSE STRUCTURE
+        print("🧠 AI FULL RESPONSE KEYS:", data.keys())
+
+        if "choices" in data and len(data["choices"]) > 0:
+            message = data["choices"][0].get("message", {})
+            content = message.get("content", "")
+            print("🧠 AI CONTENT:", content)
+            return content
+
+        print("⚠️ Unexpected AI response format:", data)
+        return None
 
     except Exception as e:
         print("AI ERROR:", e)
         return None
-    
-def extract_json(raw, mode):
-    try:
-        start = raw.find("{")
-        end = raw.rfind("}") + 1
-        if start != -1 and end != -1:
-            return json.loads(raw[start:end])
-    except Exception as e:
-        print(f"⚠️ JSON parse error ({mode}):", e)
-        print("RAW AI OUTPUT:", raw)
-        
-
-    return None
-
 
 
 # ================= LIGHT AI =================
