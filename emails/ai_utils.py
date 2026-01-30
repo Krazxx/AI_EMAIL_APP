@@ -32,6 +32,10 @@ def start_gmail_auth(request):
     return auth_url
 
 
+
+from .models import UserGmailToken
+import json
+
 def save_user_token(request, user):
     state = request.session['state']
 
@@ -39,20 +43,18 @@ def save_user_token(request, user):
         'credentials.json',
         scopes=SCOPES,
         state=state,
-       redirect_uri="https://ai-email-app-82gm.onrender.com/emails/oauth2callback/"
+        redirect_uri="https://ai-email-app-82gm.onrender.com/emails/oauth2callback/"
 
     )
 
     flow.fetch_token(authorization_response=request.build_absolute_uri())
-
     creds = flow.credentials
 
-    BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    token_path = os.path.join(BASE_DIR, f"token_{user.id}.json")
+    obj, created = UserGmailToken.objects.get_or_create(user=user)
+    obj.token_json = json.loads(creds.to_json())
+    obj.save()
 
 
-    with open(token_path, 'w') as token:
-        token.write(creds.to_json())
 
 
 OLLAMA_URL = " https://vanquishable-liplike-rosina.ngrok-free.dev"

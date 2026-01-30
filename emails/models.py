@@ -1,5 +1,10 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.db import models
+
+class UserGmailToken(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    token_json = models.JSONField(null=True, blank=True)
 
 
 
