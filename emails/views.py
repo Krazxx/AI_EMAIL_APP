@@ -2,7 +2,8 @@ import os
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from .models import Email
-from .emails import fetch_and_store_emails
+from .ai_utils import fetch_and_store_emails
+
 from .forms import CustomSignupForm
 from .ai_utils import analyze_email_light, analyze_email_full
 from django.shortcuts import redirect
