@@ -8,6 +8,7 @@ urlpatterns = [
     # 🔥 GMAIL OAUTH FLOW
     path('connect-gmail/', views.connect_gmail, name='connect_gmail'),
     path('oauth2callback/', views.oauth2callback, name='oauth2callback'),
+    
 
     # Gmail Actions
     path('sync/', views.sync_gmail, name='sync_gmail'),
