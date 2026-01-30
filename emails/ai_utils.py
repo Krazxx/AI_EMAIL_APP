@@ -1,6 +1,5 @@
 import requests
 import json
-import re
 import os
 import base64
 from google_auth_oauthlib.flow import Flow
@@ -46,6 +45,7 @@ if not OPENROUTER_KEY:
     print("❌ OPENROUTER_API_KEY not set")
 
 
+# 🔥 SAFE AI CALL
 def ask_ai(prompt):
     try:
         r = requests.post(
@@ -57,7 +57,7 @@ def ask_ai(prompt):
             json={
                 "model": "meta-llama/llama-3-8b-instruct",
                 "messages": [
-                    {"role": "system", "content": "Return ONLY valid JSON."},
+                    {"role": "system", "content": "You are an API. Only return valid JSON."},
                     {"role": "user", "content": prompt}
                 ],
                 "temperature": 0.2,
@@ -67,19 +67,14 @@ def ask_ai(prompt):
         )
 
         print("🧠 AI STATUS:", r.status_code)
-
         data = r.json()
 
-        # 🔥 DEBUG FULL RESPONSE STRUCTURE
-        print("🧠 AI FULL RESPONSE KEYS:", data.keys())
-
-        if "choices" in data and len(data["choices"]) > 0:
-            message = data["choices"][0].get("message", {})
-            content = message.get("content", "")
+        if "choices" in data and data["choices"]:
+            content = data["choices"][0]["message"].get("content", "")
             print("🧠 AI CONTENT:", content)
             return content
 
-        print("⚠️ Unexpected AI response format:", data)
+        print("⚠️ Unexpected AI format:", data)
         return None
 
     except Exception as e:
@@ -87,25 +82,47 @@ def ask_ai(prompt):
         return None
 
 
+# 🔥 CLEAN JSON EXTRACTOR (CRITICAL FIX)
+def extract_json(raw, mode):
+    try:
+        if not raw:
+            return None
+
+        # Remove markdown formatting
+        raw = raw.replace("```json", "").replace("```", "").strip()
+
+        # Extract JSON portion
+        start = raw.find("{")
+        end = raw.rfind("}") + 1
+
+        if start != -1 and end != -1:
+            clean_json = raw[start:end]
+            return json.loads(clean_json)
+
+    except Exception as e:
+        print(f"⚠️ JSON parse error ({mode}):", e)
+        print("RAW AI OUTPUT:", raw)
+
+    return None
+
+
 # ================= LIGHT AI =================
 def analyze_email_light(subject, body):
     prompt = f"""
-You are an advanced email classification AI.
+You are an email classification API. Return ONLY JSON.
 
-Classify emails using these rules:
-
-- If email talks about money, bank, transaction, payment → banking
-- If email mentions login, password, verification, security alert → security
-- If email contains offer, discount, sale, free trial → promotion
-- If email is from social apps like Instagram, Facebook, Discord → social
-- If work related → work
-- If clearly junk/scam → spam
+Rules:
+- Money, payment, transaction → banking
+- Login, password, verification, alert → security
+- Offers, discount, sale → promotion
+- Social platforms → social
+- Work emails → work
+- Junk/scam → spam
 - Otherwise → personal
-
 
 Return ONLY JSON:
 {{
-  "category": "work/social/promotion/spam/security/banking/personal",
+  "category": "banking/security/social/promotion/work/personal/spam",
   "summary": "short summary",
   "important": "yes/no"
 }}
@@ -119,18 +136,17 @@ BODY: {body}
         return {"category": "unknown", "summary": "", "important": "no"}
 
     data = extract_json(raw, "light")
-
     if data:
         return data
 
-    print("⚠️ AI returned invalid format:", raw)
     return {"category": "unknown", "summary": "", "important": "no"}
 
 
 # ================= FULL AI (REPLY) =================
 def analyze_email_full(subject, body):
     prompt = f"""
-Return ONLY JSON:
+You are an email reply API. Return ONLY JSON.
+
 {{ "reply": "short helpful reply" }}
 
 SUBJECT: {subject}
@@ -142,11 +158,9 @@ BODY: {body}
         return {"reply": "AI server not responding."}
 
     data = extract_json(raw, "full")
-
     if data:
         return data
 
-    print("⚠️ AI reply format error:", raw)
     return {"reply": "AI response format error."}
 
 
@@ -158,13 +172,8 @@ def fetch_and_store_emails(user):
         print("❌ No Gmail token in database")
         return
 
-    creds = Credentials.from_authorized_user_info(
-        token_obj.token_json,
-        SCOPES
-    )
-
+    creds = Credentials.from_authorized_user_info(token_obj.token_json, SCOPES)
     service = build('gmail', 'v1', credentials=creds)
-
 
     try:
         results = service.users().messages().list(userId='me', maxResults=15).execute()
