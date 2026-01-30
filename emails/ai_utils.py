@@ -2,17 +2,17 @@ import requests
 import json
 import re
 import os
+import base64
 from google_auth_oauthlib.flow import Flow
 from google.oauth2.credentials import Credentials
-import base64
 from googleapiclient.discovery import build
-from .models import Email
 from django.utils import timezone
-from .models import UserGmailToken
+from .models import Email, UserGmailToken
 
 SCOPES = ['https://www.googleapis.com/auth/gmail.modify']
 
 
+# ================= GOOGLE OAUTH =================
 def start_gmail_auth(request):
     flow = Flow.from_client_secrets_file(
         'credentials.json',
@@ -35,24 +35,26 @@ def save_user_token(request, user):
     flow.fetch_token(authorization_response=request.build_absolute_uri())
     creds = flow.credentials
 
-    obj, created = UserGmailToken.objects.get_or_create(user=user)
+    obj, _ = UserGmailToken.objects.get_or_create(user=user)
     obj.token_json = json.loads(creds.to_json())
     obj.save()
 
 
 # ================= AI CONFIG =================
-OLLAMA_URL = "https://vanquishable-liplike-rosina.ngrok-free.dev/api/generate"
+OLLAMA_URL = "https://vanquishable-liplike-rosina.ngrok-free.dev/api/chat"
 MODEL = "llama3"
 
 
-# 🔥 SAFE OLLAMA CALL WRAPPER
+# 🔥 SAFE OLLAMA CALL
 def ask_ollama(prompt):
     try:
         r = requests.post(
             OLLAMA_URL,
             json={
                 "model": MODEL,
-                "prompt": prompt,
+                "messages": [
+                    {"role": "user", "content": prompt}
+                ],
                 "stream": False
             },
             timeout=60
@@ -65,16 +67,14 @@ def ask_ollama(prompt):
             return None
 
         data = r.json()
-        return data.get("response")
+        return data.get("message", {}).get("content")
 
     except Exception as e:
         print("AI CONNECTION ERROR:", e)
         return None
 
 
-# =========================================
-# LIGHT AI
-# =========================================
+# ================= LIGHT AI =================
 def analyze_email_light(subject, body):
     prompt = f"""
 Return ONLY JSON:
@@ -99,9 +99,7 @@ BODY: {body}
     return {"category": "unknown", "summary": "", "important": "no"}
 
 
-# =========================================
-# FULL AI (REPLY)
-# =========================================
+# ================= FULL AI (REPLY) =================
 def analyze_email_full(subject, body):
     prompt = f"""
 Return ONLY JSON:
@@ -122,7 +120,7 @@ BODY: {body}
     return {"reply": "AI response format error."}
 
 
-# ================= GMAIL FETCH (UNCHANGED) =================
+# ================= GMAIL FETCH =================
 def fetch_and_store_emails(user):
     token_path = f"token_{user.id}.json"
 
