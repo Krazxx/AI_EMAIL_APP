@@ -75,20 +75,27 @@ button { padding:10px 20px; background:#00c3ff; border:none; color:white; border
     <h1>Create Account</h1>
     <form method="post">
     {% csrf_token %}
-
-    {% for field in form %}
+{% for field in form %}
+    {% if field.name == "password2" %}
+        <input type="password"
+               name="password2"
+               placeholder="Retype Password"
+               required>
+    {% else %}
         <input type="{{ field.field.widget.input_type }}"
                name="{{ field.name }}"
                placeholder="{{ field.label }}"
                value="{{ field.value|default_if_none:'' }}"
                required>
+    {% endif %}
 
-        {% if field.errors %}
-            <div style="color:#ff4d4d; font-size:13px; text-align:left; margin-bottom:10px;">
-                {{ field.errors|striptags }}
-            </div>
-        {% endif %}
-    {% endfor %}
+    {% if field.errors %}
+        <div style="color:#ff4d4d; font-size:13px; text-align:left; margin-bottom:10px;">
+            {{ field.errors|striptags }}
+        </div>
+    {% endif %}
+{% endfor %}
+
 
     {% if form.non_field_errors %}
         <div style="color:#ff4d4d;">
