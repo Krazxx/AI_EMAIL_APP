@@ -56,9 +56,12 @@ def ask_ai(prompt):
             },
             json={
                 "model": "meta-llama/llama-3-8b-instruct",
-                "messages": [
-                    {"role": "user", "content": prompt}
-                ]
+    "messages": [
+        {"role": "system", "content": "You are a JSON API. Only return valid JSON."},
+        {"role": "user", "content": prompt}
+    ],
+    "temperature": 0.2,
+    "max_tokens": 200
             },
             timeout=60
         )
@@ -78,13 +81,17 @@ def ask_ai(prompt):
     
 def extract_json(raw, mode):
     try:
-        match = re.search(r'\{.*\}', raw, re.DOTALL)
-        if match:
-            return json.loads(match.group(0))
+        start = raw.find("{")
+        end = raw.rfind("}") + 1
+        if start != -1 and end != -1:
+            return json.loads(raw[start:end])
     except Exception as e:
         print(f"⚠️ JSON parse error ({mode}):", e)
+        print("RAW AI OUTPUT:", raw)
+        
 
     return None
+
 
 
 # ================= LIGHT AI =================

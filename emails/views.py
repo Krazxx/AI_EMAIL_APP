@@ -81,6 +81,8 @@ def sync_gmail(request):
         email.summary = ai.get("summary", email.subject[:120])
         email.is_important = ai.get("important", "no").lower() == "yes"
         email.is_spam = email.category == "spam"
+        print("🤖 AI RAW RESULT:", ai)
+
 
         email.save()
 
