@@ -81,13 +81,14 @@ SOCIALACCOUNT_PROVIDERS = {
 }
 
 # ---------------- ALLAUTH SETTINGS ----------------
-ACCOUNT_LOGIN_METHODS = {"email"}
-ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*", "password2*"]
-ACCOUNT_EMAIL_VERIFICATION = "none"
-
+LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/login/'
-LOGIN_URL = '/accounts/login/'
+
+ACCOUNT_LOGIN_REDIRECT_URL = '/'
+ACCOUNT_LOGOUT_REDIRECT_URL = '/login/'
+ACCOUNT_EMAIL_VERIFICATION = "none"
+
 
 # ---------------- SECURITY FOR RENDER ----------------
 CSRF_TRUSTED_ORIGINS = [
