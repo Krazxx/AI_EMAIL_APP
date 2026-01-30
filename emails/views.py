@@ -1,26 +1,28 @@
 import os
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
-from .models import Email
-from .ai_utils import fetch_and_store_emails
 from django.db.models import Q
+from .models import Email
 from .forms import CustomSignupForm
-from .ai_utils import analyze_email_light, analyze_email_full
-from django.shortcuts import redirect
-from .ai_utils import start_gmail_auth
-from django.shortcuts import redirect
-from .ai_utils import save_user_token
+from .ai_utils import (
+    fetch_and_store_emails,
+    analyze_email_light,
+    analyze_email_full,
+    start_gmail_auth,
+    save_user_token
+)
 
+# ==========================
+# GMAIL OAUTH CALLBACK
+# ==========================
 def oauth2callback(request):
     save_user_token(request, request.user)
-    return redirect('/emails/')
+    return redirect('email_list')
 
 
 def connect_gmail(request):
     auth_url = start_gmail_auth(request)
     return redirect(auth_url)
-
-
 
 
 # ==========================
@@ -52,42 +54,49 @@ def delete_spam(request):
 # ==========================
 @login_required
 def switch_gmail_account(request):
-    token_path = f"token_{request.user.id}.json"   # ✅ per user
+    token_path = f"token_{request.user.id}.json"
     if os.path.exists(token_path):
         os.remove(token_path)
     return redirect('sync_gmail')
 
 
 # ==========================
-# SYNC GMAIL + AUTO AI CLASSIFICATION
+# 🔥 SYNC GMAIL + AUTO AI CLASSIFICATION
 # ==========================
 @login_required
 def sync_gmail(request):
-    # Step 1: Fetch from Gmail
+    # Step 1: Fetch new emails
     fetch_and_store_emails(request.user)
 
-    # Step 2: Get emails that need AI classification
+    # Step 2: Get emails that still need AI processing
     emails = Email.objects.filter(user=request.user).filter(
-        Q(category__isnull=True) | Q(category="unknown")
+        Q(category__isnull=True) |
+        Q(category="") |
+        Q(category="unknown") |
+        Q(summary__isnull=True) |
+        Q(summary="")
     )
 
-    # Step 3: Run AI
+    print(f"📬 Emails needing AI classification: {emails.count()}")
+
+    # Step 3: Run AI classifier
     for email in emails:
         print("🤖 Classifying:", email.subject)
 
         ai = analyze_email_light(email.subject, email.body)
+        print("🧠 AI RESULT:", ai)
 
         email.category = ai.get("category", "personal").lower()
         email.summary = ai.get("summary", email.subject[:120])
         email.is_important = ai.get("important", "no").lower() == "yes"
         email.is_spam = email.category == "spam"
-        print("🤖 AI RAW RESULT:", ai)
-
 
         email.save()
 
     print("✅ AI classification complete")
     return redirect('email_list')
+
+
 # ==========================
 # SHOW EMAIL LIST
 # ==========================
@@ -98,18 +107,16 @@ def email_list(request):
 
 
 # ==========================
-# MANUAL ANALYZE (REPLY ONLY)
+# MANUAL ANALYZE (REPLY)
 # ==========================
 @login_required
 def process_email(request, email_id):
     email = get_object_or_404(Email, id=email_id, user=request.user)
 
     ai = analyze_email_full(email.subject, email.body)
-    email.suggested_reply = ai.get("reply", "")
+    print("🤖 Reply AI result:", ai)
 
+    email.suggested_reply = ai.get("reply", "AI could not generate reply.")
     email.save()
+
     return redirect('email_list')
-
-
-
-
