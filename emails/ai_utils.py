@@ -153,14 +153,19 @@ BODY: {body}
 
 # ================= GMAIL FETCH =================
 def fetch_and_store_emails(user):
-    token_path = f"token_{user.id}.json"
-
-    if not os.path.exists(token_path):
-        print("❌ No Gmail token found")
+    try:
+        token_obj = UserGmailToken.objects.get(user=user)
+    except UserGmailToken.DoesNotExist:
+        print("❌ No Gmail token in database")
         return
 
-    creds = Credentials.from_authorized_user_file(token_path, SCOPES)
+    creds = Credentials.from_authorized_user_info(
+        token_obj.token_json,
+        SCOPES
+    )
+
     service = build('gmail', 'v1', credentials=creds)
+
 
     try:
         results = service.users().messages().list(userId='me', maxResults=15).execute()
