@@ -57,8 +57,9 @@ def save_user_token(request, user):
 
 
 
-OLLAMA_URL = " https://vanquishable-liplike-rosina.ngrok-free.dev"
+OLLAMA_URL = "https://vanquishable-liplike-rosina.ngrok-free.dev/api/generate"
 MODEL = "llama3"
+
 
 
 # =========================================
