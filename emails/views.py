@@ -67,7 +67,10 @@ def sync_gmail(request):
     fetch_and_store_emails(request.user)
 
     # Now classify new emails
-    emails = Email.objects.filter(user=request.user, category__isnull=True)
+    emails = Email.objects.filter(user=request.user).filter(
+    category__isnull=True
+) | Email.objects.filter(user=request.user, category="unknown")
+
 
     for email in emails:
         ai = analyze_email_light(email.subject, email.body)
