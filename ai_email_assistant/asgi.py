@@ -1,27 +1,5 @@
-"""
-ASGI config for ai_email_assistant project.
-
-It exposes the ASGI callable as a module-level variable named ``application``.
-
-For more information on this file, see
-https://docs.djangoproject.com/en/6.0/howto/deployment/asgi/
-"""
-
 import os
-
 from django.core.asgi import get_asgi_application
-from django.contrib.auth import get_user_model
-
-User = get_user_model()
-
-username = os.environ.get("DJANGO_SUPERUSER_USERNAME")
-email = os.environ.get("DJANGO_SUPERUSER_EMAIL")
-password = os.environ.get("DJANGO_SUPERUSER_PASSWORD")
-
-if username and email and password:
-    if not User.objects.filter(username=username).exists():
-        User.objects.create_superuser(username=username, email=email, password=password)
-
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'ai_email_assistant.settings')
 
